@@ -27,6 +27,32 @@ class MedicationTimelineEntry(models.Model):
 
     def __str__(self):
         return f"{self.medication.name} ({self.start_date or 'Unknown'} - {self.end_date or 'Present'})"
+    
+    def save(self, *args, **kwargs):
+        self.conflicting = False
+        self.conflict_notes = ""
+
+        if self.start_date:
+            conflicts = MedicationTimelineEntry.objects(
+                medication = self.medicartion
+            ).exclude(pk=self.pk).filter(
+                source_facility__isnull=False
+            )
+
+            for entry in conflicts:
+                entry_start = entry.start_date
+                entry_end = entry.end_date or entry_start
+
+                self_end = self.end_date or self.start_date
+
+                if(self.start_date <= entry_end and self_end >= entry_start) and (self.source_facility != entry.source_facility):
+                    self.conflicting = True
+                    self.conflicting_notes = (
+                        f"conflict with {entry.source_facility} on overlapping date(s)."
+                    )
+                    break
+
+        super().save(*args, **kwargs)
 
 #change within a medication course
 class MedicationHistory(models.Model):
