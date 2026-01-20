@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Medication(models.Model):
     name = models.CharField(max_length=1000)
@@ -25,6 +26,14 @@ class MedicationTimelineEntry(models.Model):
     conflict_notes = models.TextField(blank=True)
     conflicting = models.BooleanField(default=False)
 
+    contributor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="medication_entries"
+    )
+
     def __str__(self):
         return f"{self.medication.name} ({self.start_date or 'Unknown'} - {self.end_date or 'Present'})"
     
@@ -33,8 +42,8 @@ class MedicationTimelineEntry(models.Model):
         self.conflict_notes = ""
 
         if self.start_date:
-            conflicts = MedicationTimelineEntry.objects(
-                medication = self.medicartion
+            conflicts = MedicationTimelineEntry.objects.filter(
+                medication = self.medication
             ).exclude(pk=self.pk).filter(
                 source_facility__isnull=False
             )
@@ -75,6 +84,14 @@ class MedicationHistory(models.Model):
     source_facility = models.CharField(max_length=200, blank=True)
 
     change_notes = models.TextField(blank=True)
+
+    contributor = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="medication_history_entries"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

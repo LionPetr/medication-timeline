@@ -8,6 +8,11 @@ class MedicationHistoryInline(admin.TabularInline):
     fields = ('dose', 'route', 'end_date', 'source_facility', 'change_notes', 'created_at')
     show_change_link = True
 
+    def save_model(self, request, obj, form, change):
+        if not obj.contributor:
+            obj.contributor = request.user
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(MedicationTimelineEntry)
 class MedicationTimelineEntryAdmin(admin.ModelAdmin):
@@ -15,6 +20,19 @@ class MedicationTimelineEntryAdmin(admin.ModelAdmin):
     list_filter = ('medication', 'conflicting', 'source_facility')
     search_fields = ('medication__name', 'notes', 'conflict_notes')
     inlines = [MedicationHistoryInline]
+
+    def save_model(self, request, obj, form, change):
+        if not obj.contributor:
+            obj.contributor = request.user
+        super().save_model(request, obj, form, change)
+    
+    def save_formSet(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if not instance.contributor:
+                instance.contributor = request.user
+            instance.save()
+        formset.save_m2m()
 
 @admin.register(Medication)
 class MedicationAdmin(admin.ModelAdmin):
