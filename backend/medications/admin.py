@@ -21,6 +21,8 @@ class MedicationTimelineEntryAdmin(admin.ModelAdmin):
     search_fields = ('medication__name', 'notes', 'conflict_notes')
     inlines = [MedicationHistoryInline]
 
+    readonly_fields = ('conflicting', 'conflict_notes', 'contributor')
+
     def save_model(self, request, obj, form, change):
         if not obj.contributor:
             obj.contributor = request.user

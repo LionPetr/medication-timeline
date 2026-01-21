@@ -43,7 +43,8 @@ class MedicationTimelineEntry(models.Model):
 
         if self.start_date:
             conflicts = MedicationTimelineEntry.objects.filter(
-                medication = self.medication
+                medication = self.medication,
+                start_date__isnull=False
             ).exclude(pk=self.pk).filter(
                 source_facility__isnull=False
             )
@@ -56,7 +57,7 @@ class MedicationTimelineEntry(models.Model):
 
                 if(self.start_date <= entry_end and self_end >= entry_start) and (self.source_facility != entry.source_facility):
                     self.conflicting = True
-                    self.conflicting_notes = (
+                    self.conflict_notes = (
                         f"conflict with {entry.source_facility} on overlapping date(s)."
                     )
                     break
