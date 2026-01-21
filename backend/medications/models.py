@@ -116,7 +116,6 @@ class MedicationHistory(models.Model):
                 fields_to_carry_forward = [
                     "dose", 
                     "route",
-                    "frequency",
                     "end_date",
                     "source_facility",
                     "frequency",
@@ -129,6 +128,14 @@ class MedicationHistory(models.Model):
                         setattr(self, field, previous_value)
 
         super().save(*args, **kwargs)
+
+        latest = self.timeline_entry.history.order_by("-created_at").first()
+        if latest:
+            self.timeline_entry.current_dose = latest.dose
+            self.timeline_entry.current_route = latest.route
+            self.timeline_entry.source_facility = latest.source_facility
+            self.timeline_entry.end_date = latest.end_date
+            self.timeline_entry.save()
 
     class Meta:
         ordering = ["created_at"]
