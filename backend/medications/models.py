@@ -1,8 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import date
+from .choices import Route
 
 class Medication(models.Model):
     name = models.CharField(max_length=1000)
+
+    def __str__(self):
+        return self.name
+
+
+class Facility(models.Model):
+    name = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name
@@ -20,8 +30,17 @@ class MedicationTimelineEntry(models.Model):
     end_date = models.DateField(null=True, blank=True)
     current_dose = models.CharField(max_length=100, blank=True)
     current_frequency = models.CharField(max_length=100, blank=True)
-    current_route = models.CharField(max_length=20, blank=True)
-    source_facility = models.CharField(max_length=200, blank=True)
+    current_route = models.CharField(
+        max_length=20,
+        choices=Route.choices,
+        blank=True
+    )
+    source_facility = models.ForeignKey(
+        Facility,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
 
     notes = models.TextField(blank=True) #general notes
     conflict_notes = models.TextField(blank=True)
@@ -35,46 +54,54 @@ class MedicationTimelineEntry(models.Model):
         related_name="medication_entries"
     )
 
-    def __str__(self):
-        return f"{self.medication.name} ({self.start_date or 'Unknown'} - {self.end_date or 'Present'})"
-    
-    def save(self, *args, **kwargs):
+
+    def update_conflicts(self):
         self.conflicting = False
         self.conflict_notes = ""
 
-        if self.start_date:
-            conflicts = MedicationTimelineEntry.objects.filter(
-                medication = self.medication,
-                start_date__isnull=False
-            ).exclude(pk=self.pk).filter(
-                source_facility__isnull=False
+        others = MedicationTimelineEntry.objects.filter(
+            medication=self.medication,
+            start_date__isnull=False,
+            source_facility__isnull=False
+        ).exclude(pk=self.pk)
+
+        self_end = self.end_date or date.today() 
+
+        updates = []
+
+        for other in others:
+            other_end = other.end_date or date.today()
+
+            if self.start_date <= other_end and self_end >= other.start_date and (self.source_facility != other.source_facility):
+                self.conflicting = True
+                other.conflicting = True
+
+                self.conflict_notes = f"Conflict with {other.source_facility} from {other.start_date} to {other_end}."
+                other.conflict_notes = f"Conflict with {self.source_facility} from {self.start_date} to {self_end}."
+
+                updates.append(other)
+
+        
+        super(MedicationTimelineEntry, self).save(update_fields=["conflicting", "conflict_notes"])
+
+        for other in updates:
+            MedicationTimelineEntry.objects.filter(pk=other.pk).update(
+                conflicting=True,
+                conflict_notes=other.conflict_notes
             )
-
-            for entry in conflicts:
-                entry_start = entry.start_date
-                entry_end = entry.end_date or entry_start
-
-                self_end = self.end_date or self.start_date
-
-                if(self.start_date <= entry_end and self_end >= entry_start) and (self.source_facility != entry.source_facility):
-                    self.conflicting = True
-                    self.conflict_notes = (
-                        f"conflict with {entry.source_facility} on overlapping date(s)."
-                    )
-                    break
-
+                          
+        
+    
+    def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        if self.start_date:
+            self.update_conflicts()
+
+    def __str__(self):
+        return f"{self.medication.name} ({self.start_date or 'Unknown'} - {self.end_date or 'Present'})"
 
 #change within a medication course
 class MedicationHistory(models.Model):
-    ROUTE_CHOICES = [
-        ("oral", "Oral"),
-        ("iv", "IV"),
-        ("subcutaneous", "Subcutaneous"),
-        ("topical", "Topical"),
-        ("other", "Other"),
-    ]
-
     timeline_entry = models.ForeignKey(
         MedicationTimelineEntry,
         on_delete=models.CASCADE,
@@ -84,11 +111,17 @@ class MedicationHistory(models.Model):
     frequency = models.CharField(max_length=100, blank=True)
     route = models.CharField(
         max_length=20,
-        choices=ROUTE_CHOICES,
+        choices=Route.choices,
         blank=True
     )
     end_date = models.DateField(null=True, blank=True)
-    source_facility = models.CharField(max_length=200, blank=True)
+    
+    source_facility = models.ForeignKey(
+        Facility,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
 
     change_notes = models.TextField(blank=True)
 
