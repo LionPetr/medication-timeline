@@ -15,5 +15,6 @@ and another showing a specific medication course timeline and all the changes as
 
 For future implementation: 
 - add more robust rules when it comes to conflict checking 
-- add facility and clinician tables with things like contact information to establish proper communication channels 
-- making Route its own table if there are more ways to administer medicine 
+- add clinician tables with things like contact information to establish proper communication channels 
+- making Route its own table if there are more ways to administer medicine
+- add a range for different medications using the medication table and give a warning if the dosage is outside of that range (in case of mistyping)

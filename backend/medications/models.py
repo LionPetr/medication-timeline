@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
 from .choices import Route
+from django.db.models import Q
+from django.db import transaction
 
 class Medication(models.Model):
     name = models.CharField(max_length=1000)
@@ -54,41 +56,54 @@ class MedicationTimelineEntry(models.Model):
         related_name="medication_entries"
     )
 
-
     def update_conflicts(self):
-        self.conflicting = False
-        self.conflict_notes = ""
+        today = date.today()
 
-        others = MedicationTimelineEntry.objects.filter(
+        MedicationTimelineEntry.objects.filter(
+            medication=self.medication,
+        ).update(conflicting=False, conflict_notes="")
+
+        entries = MedicationTimelineEntry.objects.filter(
             medication=self.medication,
             start_date__isnull=False,
             source_facility__isnull=False
-        ).exclude(pk=self.pk)
-
-        self_end = self.end_date or date.today() 
+        )
 
         updates = []
 
-        for other in others:
-            other_end = other.end_date or date.today()
+        for entry in entries:
+            entry_end = entry.end_date or today
 
-            if self.start_date <= other_end and self_end >= other.start_date and (self.source_facility != other.source_facility):
-                self.conflicting = True
-                other.conflicting = True
+            conflicting_entries = [
+                other for other in entries
+                if other.pk != entry.pk
+                and other.start_date is not None
+                and other.source_facility != entry.source_facility
+                and other.current_dose != entry.current_dose
+                and other.start_date <= entry_end
+                and (other.end_date or today) >= entry.start_date
+            ]
 
-                self.conflict_notes = f"Conflict with {other.source_facility} from {other.start_date} to {other_end}."
-                other.conflict_notes = f"Conflict with {self.source_facility} from {self.start_date} to {self_end}."
+            if conflicting_entries:
+                entry.conflicting = True
+                notes = []
+                for other in conflicting_entries:
+                    notes.append(
+                        f"Conflict with {other.source_facility} ({other.current_dose}) from {other.start_date} to {other.end_date or 'Present'}."
+                    )
+                    other.conflicting = True
+                    other.conflict_notes = f"Conflict with {entry.source_facility} ({entry.current_dose}) from {entry.start_date} to {entry.end_date or 'Present'}."
+                    updates.append(other)
+                
+                entry.conflict_notes = " | ".join(notes)
+                updates.append(entry)
 
-                updates.append(other)
-
-        
-        super(MedicationTimelineEntry, self).save(update_fields=["conflicting", "conflict_notes"])
-
-        for other in updates:
-            MedicationTimelineEntry.objects.filter(pk=other.pk).update(
-                conflicting=True,
-                conflict_notes=other.conflict_notes
-            )
+        with transaction.atomic():
+            for entry in updates:
+                MedicationTimelineEntry.objects.filter(pk=entry.pk).update(
+                    conflicting=entry.conflicting,
+                    conflict_notes=entry.conflict_notes
+                )
                           
         
     

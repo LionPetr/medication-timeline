@@ -5,7 +5,7 @@ class MedicationHistoryInline(admin.TabularInline):
     model = MedicationHistory
     extra = 1
     readonly_fields = ('created_at',)
-    fields = ('dose', 'route', 'frequency', 'end_date', 'change_notes', 'created_at')
+    fields = ('dose', 'route', 'frequency', 'source_facility', 'end_date', 'change_notes', 'created_at')
     show_change_link = True
 
     def save_model(self, request, obj, form, change):
@@ -17,7 +17,7 @@ class MedicationHistoryInline(admin.TabularInline):
 @admin.register(MedicationTimelineEntry)
 class MedicationTimelineEntryAdmin(admin.ModelAdmin):
     list_display = ('medication', 'start_date', 'end_date', 'current_dose', 'current_route', 'source_facility', 'current_frequency', 'conflicting')
-    list_filter = ('medication', 'conflicting')
+    list_filter = ('medication', 'source_facility', 'conflicting')
     search_fields = ('medication__name', 'notes', 'conflict_notes')
     inlines = [MedicationHistoryInline]
 
@@ -28,7 +28,7 @@ class MedicationTimelineEntryAdmin(admin.ModelAdmin):
             obj.contributor = request.user
         super().save_model(request, obj, form, change)
     
-    def save_formSet(self, request, form, formset, change):
+    def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for instance in instances:
             if not instance.contributor:
@@ -50,7 +50,7 @@ class MedicationHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(Facility)
 class FacilityAdmin(admin.ModelAdmin):
-    list_display = ('name')
-    search_fields = ('name')
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
