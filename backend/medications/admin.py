@@ -5,7 +5,7 @@ class MedicationHistoryInline(admin.TabularInline):
     model = MedicationHistory
     extra = 1
     readonly_fields = ('created_at',)
-    fields = ('dose', 'route', 'end_date', 'source_facility', 'change_notes', 'created_at')
+    fields = ('dose', 'route', 'frequency', 'end_date', 'source_facility', 'change_notes', 'created_at')
     show_change_link = True
 
     def save_model(self, request, obj, form, change):
@@ -16,7 +16,7 @@ class MedicationHistoryInline(admin.TabularInline):
 
 @admin.register(MedicationTimelineEntry)
 class MedicationTimelineEntryAdmin(admin.ModelAdmin):
-    list_display = ('medication', 'start_date', 'end_date', 'current_dose', 'current_route', 'conflicting')
+    list_display = ('medication', 'start_date', 'end_date', 'current_dose', 'current_route', 'current_frequency', 'conflicting')
     list_filter = ('medication', 'conflicting', 'source_facility')
     search_fields = ('medication__name', 'notes', 'conflict_notes')
     inlines = [MedicationHistoryInline]

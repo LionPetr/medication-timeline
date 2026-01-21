@@ -19,6 +19,7 @@ class MedicationTimelineEntry(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     current_dose = models.CharField(max_length=100, blank=True)
+    current_frequency = models.CharField(max_length=100, blank=True)
     current_route = models.CharField(max_length=20, blank=True)
     source_facility = models.CharField(max_length=200, blank=True)
 
@@ -79,8 +80,13 @@ class MedicationHistory(models.Model):
         on_delete=models.CASCADE,
         related_name="history"
     )
-    dose = models.CharField(max_length=100)
-    route = models.CharField(max_length=20, choices=ROUTE_CHOICES)
+    dose = models.CharField(max_length=100, blank=True)
+    frequency = models.CharField(max_length=100, blank=True)
+    route = models.CharField(
+        max_length=20,
+        choices=ROUTE_CHOICES,
+        blank=True
+    )
     end_date = models.DateField(null=True, blank=True)
     source_facility = models.CharField(max_length=200, blank=True)
 
@@ -96,6 +102,33 @@ class MedicationHistory(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            last_entry = (
+                MedicationHistory.objects
+                .filter(timeline_entry=self.timeline_entry)
+                .order_by("-created_at")
+                .first()
+            )
+            
+            if last_entry:
+                fields_to_carry_forward = [
+                    "dose", 
+                    "route",
+                    "frequency",
+                    "end_date",
+                    "source_facility",
+                    "frequency",
+                ]
+                for field in fields_to_carry_forward:
+                    current_value = getattr(self, field)
+                    previous_value = getattr(last_entry, field)
+
+                    if current_value in ("", None):
+                        setattr(self, field, previous_value)
+
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["created_at"]
