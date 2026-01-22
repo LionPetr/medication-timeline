@@ -1,6 +1,6 @@
-from django.shortcuts import render
-
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from .models import Patient, Medication, Facility, Prescription, DosageSchedule
 from .serializer import (
     PatientSerializer,
@@ -9,10 +9,7 @@ from .serializer import (
     PrescriptionSerializer,
     DosageScheduleSerializer,
 )
-
-class PatientViewSet(viewsets.ModelViewSet):
-    queryset = Patient.objects.all()
-    serializer_class = PatientSerializer
+from .services import build_timeline_items
 
 class MedicationViewSet(viewsets.ModelViewSet):
     queryset = Medication.objects.all()
@@ -29,3 +26,23 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
 class DosageScheduleViewSet(viewsets.ModelViewSet):
     queryset = DosageSchedule.objects.all()
     serializer_class = DosageScheduleSerializer
+
+
+class PatientViewSet(viewsets.ModelViewSet):
+    queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
+
+    @action(detail=True, methods=["get"])
+    def timeline(self, request, pk=None):
+        """
+        GET /patients/<pk>/timeline/
+        Returns the patient's timeline as JSON
+        """
+        patient = self.get_object()
+
+        # Prefetch related medication and dosage schedules to avoid N+1 queries
+        prescriptions = Prescription.objects.filter(patient=patient).prefetch_related("dosageschedule_set", "medication")
+
+        timeline_items = build_timeline_items(prescriptions)
+
+        return Response(timeline_items)

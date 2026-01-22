@@ -41,3 +41,11 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             'contributor',
             'dosage_schedules',
         ]
+
+class TimelineItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    medication = serializers.CharField()
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+    natural_end_date = serializers.DateField()
+    is_truncated = serializers.BooleanField()

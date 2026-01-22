@@ -23,7 +23,7 @@ class Facility(models.Model):
         return self.name
 
 class Prescription(models.Model):
-    """
+    """                                                                                             
     Represents a signle medication course on the main timeline
     """
     patient = models.ForeignKey(
