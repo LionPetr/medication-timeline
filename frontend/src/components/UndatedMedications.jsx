@@ -45,7 +45,6 @@ const UndatedMedications = ({ items, apiUrl, onPrescriptionDeleted }) => {
             }
         } catch (err) {
             alert(`Error deleting prescription: ${err.message}`);
-            console.error("Delete error:", err);
         } finally {
             setDeleting(false);
         }

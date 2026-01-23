@@ -8,14 +8,14 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 function App() {
   const [timelineItems, setTimelineItems] = useState([]);
   const [undatedItems, setUndatedItems] = useState([]);
-  const [selectedMed, setSelectedMed] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchTimeline = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/api/patients/1/timeline/`
+        `${API_URL}/api/patients/1/timeline/`,
+        { timeout: 60000 }  // 60 second timeout for cold starts
       );
 
       if (!response.ok) {
@@ -24,9 +24,13 @@ function App() {
 
       const data = await response.json();
       setTimelineItems(data);
+      setError(null);  // Clear any previous errors on success
     } catch (err) {
-      console.error(err);
-      setError(err.message);
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError("Server is starting up (this takes 30-60 seconds on first load). Please wait...");
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -45,7 +49,7 @@ function App() {
       const data = await response.json();
       setUndatedItems(data);
     } catch (err) {
-      console.error("Error fetching undated meds:", err);
+      // Silently fail - undated meds section just won't show
     }
   };
 
@@ -60,8 +64,18 @@ function App() {
 
   if (error) {
     return (
-      <div style={{ padding: 20, color: "red" }}>
-        Error: {error}
+      <div style={{ padding: 20 }}>
+        <div style={{ color: "red", marginBottom: 10 }}>
+          Error: {error}
+        </div>
+        <button onClick={() => {
+          setLoading(true);
+          setError(null);
+          fetchTimeline();
+          fetchUndatedMeds();
+        }}>
+          Retry
+        </button>
       </div>
     );
   }

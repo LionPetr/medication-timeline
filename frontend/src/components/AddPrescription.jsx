@@ -13,10 +13,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchMedications();
-    }, []);
-
     const fetchMedications = async () => {
         try {
             const response = await fetch(`${apiUrl}/api/medications/`);
@@ -24,9 +20,14 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
             const data = await response.json();
             setMedications(data);
         } catch (err) {
-            console.error("Error fetching medications:", err);
+            // Silently fail - medication list won't populate
         }
     };
+
+    useEffect(() => {
+        fetchMedications();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [apiUrl]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -58,9 +59,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log("Form data:", formData);
-        console.log("Medication ID:", formData.medication_id, "Type:", typeof formData.medication_id);
-
         // Validate medication is selected
         if (!formData.medication_id || formData.medication_id === "") {
             setError("Please select a medication");
@@ -72,7 +70,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
 
         try {
             const medicationId = parseInt(formData.medication_id);
-            console.log("Parsed medication ID:", medicationId);
 
             const payload = {
                 patient: parseInt(patientId),
@@ -80,7 +77,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
                 start_date: formData.start_date || null,  // Allow null for undated medications
                 notes: formData.notes
             };
-            console.log("Sending payload:", payload);
 
             // Create prescription
             const prescriptionResponse = await fetch(`${apiUrl}/api/prescriptions/`, {
@@ -109,7 +105,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
                         route: dosage.route,
                         duration: durationDays
                     };
-                    console.log("Sending dosage payload:", payload);
 
                     const dosageResponse = await fetch(`${apiUrl}/api/dosageschedules/`, {
                         method: "POST",
@@ -119,7 +114,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
 
                     if (!dosageResponse.ok) {
                         const dosageError = await dosageResponse.json().catch(() => ({}));
-                        console.error("Dosage error response:", dosageError);
                         throw new Error(`Failed to create dosage schedule: ${JSON.stringify(dosageError)}`);
                     }
                 }
@@ -136,7 +130,6 @@ const AddPrescription = ({ patientId, onPrescriptionAdded, apiUrl }) => {
             onPrescriptionAdded();
         } catch (err) {
             setError(err.message);
-            console.error("Error creating prescription:", err);
         } finally {
             setLoading(false);
         }

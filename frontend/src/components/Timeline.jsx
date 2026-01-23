@@ -103,7 +103,6 @@ const Timeline = ({ items, daysAfter = 14, apiUrl, onPrescriptionDeleted }) => {
             }
         } catch (err) {
             alert(`Error deleting prescription: ${err.message}`);
-            console.error("Delete error:", err);
         } finally {
             setDeleting(false);
         }
@@ -188,7 +187,6 @@ const Timeline = ({ items, daysAfter = 14, apiUrl, onPrescriptionDeleted }) => {
                     const endIndex = timelineDays.indexOf(displayEndDate);
 
                     if (startIndex === -1 || endIndex === -1) {
-                        console.warn("Skipping medication:", med);
                         return null;
                     }
 
