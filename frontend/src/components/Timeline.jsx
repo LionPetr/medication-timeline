@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import "./Timeline.css";
 
-const addDays = (dateStr, n) => {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const dt = new Date(y, m - 1, d + n);
-    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
-};
-
 const getDateRange = (start, end) => {
     const result = [];
     let [y, m, d] = start.split("-").map(Number);
@@ -41,7 +35,7 @@ const getDateRange = (start, end) => {
  * Same medications stay on same row (old gets truncated), different meds stack
  */
 const assignRows = (items) => {
-    const medRowMap = {}; // Track which row each medication is assigned to
+    const medRowMap = {};
     const rows = [];
 
     items.forEach((item) => {
@@ -50,11 +44,9 @@ const assignRows = (items) => {
 
         let row;
 
-        // If this medication already has a row, use it
         if (medRowMap[item.medication] !== undefined) {
             row = medRowMap[item.medication];
         } else {
-            // Find first available row without conflicts with different medications
             row = 0;
             while (true) {
                 if (!rows[row]) rows[row] = [];
@@ -80,19 +72,10 @@ const Timeline = ({ items, daysAfter = 14 }) => {
         return <div>No medication history</div>;
     }
 
-    // Separate items with and without start dates
-    const itemsWithDates = items.filter(i => i.start_date);
-    const itemsWithoutDates = items.filter(i => !i.start_date);
-
-    if (itemsWithDates.length === 0) {
-        return <div>No medications with start dates</div>;
-    }
-
-    const dates = itemsWithDates.flatMap((i) => [i.start_date, i.end_date]).sort();
+    const dates = items.flatMap((i) => [i.start_date, i.end_date]).sort();
     const minDate = dates[0];
     const maxDate = dates[dates.length - 1];
 
-    // Extend maxDate by daysAfter
     const [y, m, d] = maxDate.split("-").map(Number);
     let extendedDay = d + daysAfter;
     let extendedMonth = m;
@@ -137,6 +120,7 @@ const Timeline = ({ items, daysAfter = 14 }) => {
                     gridTemplateColumns: `repeat(${timelineDays.length}, 80px)`,
                 }}
             >
+
                 {items.map((med) => {
                     let displayEndDate = med.end_date;
 
@@ -196,6 +180,10 @@ const Timeline = ({ items, daysAfter = 14 }) => {
                         <p><strong>End Date:</strong> {selectedMed.end_date}</p>
                         <p><strong>Status:</strong> {selectedMed.is_truncated ? "Truncated" : "Active"}</p>
 
+                        {selectedMed.notes && (
+                            <p><strong>Notes:</strong> {selectedMed.notes}</p>
+                        )}
+
                         {selectedMed.dosages && selectedMed.dosages.length > 0 && (
                             <div>
                                 <h3>Dosage Schedule</h3>
@@ -203,7 +191,6 @@ const Timeline = ({ items, daysAfter = 14 }) => {
                                     {selectedMed.dosages.map((dosage, idx) => (
                                         <li key={idx}>
                                             <strong>{dosage.dose}</strong> - {dosage.frequency} ({dosage.route})
-                                            {dosage.duration && <span> for {dosage.duration}</span>}
                                         </li>
                                     ))}
                                 </ul>

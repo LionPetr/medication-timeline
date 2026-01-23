@@ -20,11 +20,6 @@ const UndatedMedications = ({ items, onSelectMed }) => {
                             onClick={() => setSelectedMed(med)}
                         >
                             <span className="undated-med-name">{med.medication.name}</span>
-                            {med.dosageschedule_set && med.dosageschedule_set.length > 0 && (
-                                <span className="undated-med-dose">
-                                    {med.dosageschedule_set[0].dose}
-                                </span>
-                            )}
                         </div>
                     ))}
                 </div>
@@ -44,20 +39,21 @@ const UndatedMedications = ({ items, onSelectMed }) => {
                             <p><strong>Notes:</strong> {selectedMed.notes}</p>
                         )}
 
-                        {selectedMed.dosageschedule_set && selectedMed.dosageschedule_set.length > 0 && (
+                        {selectedMed.dosage_schedules && selectedMed.dosage_schedules.length > 0 && (
                             <div>
                                 <h3>Dosage Schedule</h3>
                                 <ul>
-                                    {selectedMed.dosageschedule_set.map((dosage, idx) => (
+                                    {selectedMed.dosage_schedules.map((dosage, idx) => (
                                         <li key={idx}>
-                                            <strong>{dosage.dose}</strong> - {dosage.frequency} ({dosage.route})
-                                            {dosage.duration && <span> for {dosage.duration}</span>}
+                                            {dosage.dose && <><strong>{dosage.dose}</strong></>}
+                                            {dosage.frequency && <>{dosage.dose ? ' - ' : ''}{dosage.frequency}</>}
+                                            {dosage.route && <> ({dosage.route})</>}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                         )}
-                        {(!selectedMed.dosageschedule_set || selectedMed.dosageschedule_set.length === 0) && (
+                        {(!selectedMed.dosage_schedules || selectedMed.dosage_schedules.length === 0) && (
                             <p style={{ fontStyle: "italic", color: "#999" }}>No dosage information available</p>
                         )}
                     </div>

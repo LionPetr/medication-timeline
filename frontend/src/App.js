@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MedicationTimeline from "./components/Timeline";
 import UndatedMedications from "./components/UndatedMedications";
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function App() {
   const [timelineItems, setTimelineItems] = useState([]);
@@ -13,7 +14,7 @@ function App() {
     const fetchTimeline = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/api/patients/1/timeline/"
+          `${API_URL}/api/patients/1/timeline/`
         );
 
         if (!response.ok) {
@@ -33,7 +34,7 @@ function App() {
     const fetchUndatedMeds = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/api/patients/1/undated_medications/"
+          `${API_URL}/api/patients/1/undated_medications/`
         );
 
         if (!response.ok) {
