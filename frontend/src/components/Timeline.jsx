@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import "./Timeline.css";
 
+const formatDuration = (duration) => {
+    if (!duration) return '';
+    // Extract just the days part from "X day(s), HH:MM:SS" or "X days"
+    const match = duration.match(/(\d+)\s+day/);
+    if (match) {
+        const days = parseInt(match[1]);
+        return days === 1 ? '1 day' : `${days} days`;
+    }
+    return duration;
+};
+
 const getDateRange = (start, end) => {
     const result = [];
     let [y, m, d] = start.split("-").map(Number);
@@ -178,7 +189,6 @@ const Timeline = ({ items, daysAfter = 14 }) => {
                         <h2>{selectedMed.medication}</h2>
                         <p><strong>Start Date:</strong> {selectedMed.start_date}</p>
                         <p><strong>End Date:</strong> {selectedMed.end_date}</p>
-                        <p><strong>Status:</strong> {selectedMed.is_truncated ? "Truncated" : "Active"}</p>
 
                         {selectedMed.notes && (
                             <p><strong>Notes:</strong> {selectedMed.notes}</p>
@@ -191,6 +201,7 @@ const Timeline = ({ items, daysAfter = 14 }) => {
                                     {selectedMed.dosages.map((dosage, idx) => (
                                         <li key={idx}>
                                             <strong>{dosage.dose}</strong> - {dosage.frequency} ({dosage.route})
+                                            {dosage.duration && <span> for {formatDuration(dosage.duration)}</span>}
                                         </li>
                                     ))}
                                 </ul>

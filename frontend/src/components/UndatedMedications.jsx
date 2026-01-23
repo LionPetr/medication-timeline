@@ -1,6 +1,23 @@
 import React, { useState } from "react";
 import "./UndatedMedications.css";
 
+const formatDuration = (duration) => {
+    if (!duration || duration === null || duration === 'null') return '';
+
+    // Handle string format
+    const durationStr = String(duration);
+
+    // Match patterns like "7 days, 0:00:00" or "1 day, 0:00:00" or just "7 days"
+    const match = durationStr.match(/(\d+)\s+day/);
+    if (match) {
+        const days = parseInt(match[1]);
+        return days === 1 ? '1 day' : `${days} days`;
+    }
+
+    // If no match, return empty string instead of raw value
+    return '';
+};
+
 const UndatedMedications = ({ items, onSelectMed }) => {
     const [selectedMed, setSelectedMed] = useState(null);
 
@@ -43,13 +60,17 @@ const UndatedMedications = ({ items, onSelectMed }) => {
                             <div>
                                 <h3>Dosage Schedule</h3>
                                 <ul>
-                                    {selectedMed.dosage_schedules.map((dosage, idx) => (
-                                        <li key={idx}>
-                                            {dosage.dose && <><strong>{dosage.dose}</strong></>}
-                                            {dosage.frequency && <>{dosage.dose ? ' - ' : ''}{dosage.frequency}</>}
-                                            {dosage.route && <> ({dosage.route})</>}
-                                        </li>
-                                    ))}
+                                    {selectedMed.dosage_schedules.map((dosage, idx) => {
+                                        const formattedDuration = formatDuration(dosage.duration);
+                                        return (
+                                            <li key={idx}>
+                                                {dosage.dose && <><strong>{dosage.dose}</strong></>}
+                                                {dosage.frequency && <>{dosage.dose ? ' - ' : ''}{dosage.frequency}</>}
+                                                {dosage.route && <> ({dosage.route})</>}
+                                                {formattedDuration && <span> for {formattedDuration}</span>}
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         )}
