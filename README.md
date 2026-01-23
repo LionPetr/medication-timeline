@@ -1,22 +1,25 @@
 # medication-timeline
 
 
-conflicting prescriptions will be overriden by the newest prescription as it follows real world prescription usage.  
+Decisions: 
+Changed the model multiple times throughout the project to better accomodate real world use cases ex. originally I had a Prescription object and a PrescriptionHistory object that would attach
+to the Prescription and keep track of its history using a new object for any changes. That felt extremely redundant as making a single change to dose meant I was copying the rest of the information from the previous Prescription and then updating it by writing back into the database. I decided to change the structure and represent any change in dosage as a DosageSchedule which more resembles real world prescription where the doctor gives certain intervals and dosages for medication (take 3 pills everyday for the first 2 weeks, then 1 pill everyday for a month etc.) This structure allowed for less writes to the database and made dealing with new prescriptions a lot easier. It also made using an end date redundant as knowing the start date and the duration of the treatment I could compute the end date which is what I ended up doing.  
 
-The prescription end date will be calculated using the duration field in the DosageSchedule objects attached to the prescription. if there is no DosageSchedule field then the medication 
-will be shown to have been taken for 1 day using the start date. 
+This mindset also made it easier to resolve conflicts between different prescriptions as in a real world example if you come to the hospital with a previous prescription and the physician gives you a new prescription, it most likely overrides the old prescription especially if it's the same medication. This means that whenever I am mapping these prescriptions on the timeline and they overlap I can just look at the start date of both prescriptions and give priority to the later start date. If prescriptions didn't have a start date I would still put them on the record but in a seperate section which can still have all the attributes including the Dosage Schedule which will give a lot of information even if there is no concrete start date. Using DosageSchedule I am also able to extend prescriptions just by adding another DosageSchedule object to the prescription which is a very common usecase. 
 
-no start date will be defaulted to nothing and will need to be shown using some kind of visual element on the timeline 
-and marked as "no start date" when user checks record
+Most of my time on this project was spent researching and drawing ideas about how I wanted to implement the data model. Overall I would say I spent 25 hours on the project with coding taking up arund 6 hours and the rest being dedicated to researching the Python + Django + React stack and reworking the data model. If I had more time I would try to learn more about the front end aspect of this project and experiment a little more with React and the API that I can expose to it to better get and post data. I have also reducted a lot of extra information which I do think would be useful in a real world application (ex. patient information, facility information, medicine information) but to finis the project on time and keep it fairly simple I decided to just use the name of the objects leaving room to add other information in the future. 
 
-changes to medication will be marked on the timeline 
+The things I had the most issue with was understanding the layers of full stack development. Looking back at my commits it seems like I tried to implement a model layer check system that would look for conflicts and mark the 2 prescriptions as conflicting in the database itself which in highsight doesn't make sense as that increases the number of reads and writes happening in the database without adding useful information to the object itself. I also didn't have enough time to look at the front end and so I had Copilot help me make it. 
 
-there will be 2 different timelines one showing the overall patient timeline with all courses of medication prescribed 
-and another showing a specific medication course timeline and all the changes associated with that medication 
+Using Copilot was an eye opening experince for me. Previously I would use ChatGPT for rubber ducking solutions I came up with or syntax but it couldn't really write any sustainable code for me. That was fine if I was using C++ or C# which I understand well and just need confirmation or maybe a couple of new ideas from time to time. When it came to this project's stack I was more lost on what exactly was going wrong whenever my build failed and didn't know where to even start so ChatGPT wasn't very helpful. That's why I started using Copilot and it felt amazing, having a tool with full context of your project is extremely handy as it not only helped me design some React components and pull some styling syntax which would have taken me ages to find, but it also helped me set up my project to be deployed on Render + Vercel which is something I havn't done before. 
+
+Overall I had a lot of fun with this project and got to learn a lot in an area that I usually don't work in. Full stack development seems extremely rewarding especially when your build finally goes live and you can access it from anywhere and it works. I have a couple more ideas of what I want to implement listed below so I will probably work on this project for longer after submitting it just so I can practice more.  
 
 For future implementation: 
 - add more robust rules when it comes to conflict checking 
 - add clinician tables with things like contact information to establish proper communication channels 
 - making Route its own table if there are more ways to administer medicine
 - add a range for different medications using the medication table and give a warning if the dosage is outside of that range (in case of mistyping)
-- add a system to recycle lines that arnt being used anymore (if prescription ends the line can be used for a new prescription)
+- add a system to recycle rows on the timeline that arnt being used anymore (if prescription ends the row can be used for a new prescription)
+- refactor front end to look more neat and organized 
+- add a system to view multiple patients as well as add medications, facilities, patients etc. maybe with admin mode. 
