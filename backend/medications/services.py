@@ -75,6 +75,7 @@ def build_timeline_items(prescriptions):
             "natural_end_date": natural_end,
             "is_truncated": cutoff is not None,
             "dosages": dosages,
+            "notes": p.notes,
         })
 
     return items

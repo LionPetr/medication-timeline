@@ -32,12 +32,6 @@
     column-gap: 0;
     position: relative;
     min-height: 100%;
-
-    background-image: repeating-linear-gradient(to right,
-            #ddd 0px,
-            #ddd 1px,
-            transparent 1px,
-            transparent 80px);
 }
 
 .medication-bar {
@@ -50,7 +44,7 @@
     white-space: nowrap;
 }
 
-/* Modal Styles */
+
 .modal-overlay {
     position: fixed;
     top: 0;

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: medication-timeline-backend
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn backend.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: DATABASE_URL
+        fromDatabase:
+          name: medication-timeline-db
+          property: connectionString
+
+databases:
+  - name: medication-timeline-db
+    databaseName: medication_timeline
+    user: medication_user

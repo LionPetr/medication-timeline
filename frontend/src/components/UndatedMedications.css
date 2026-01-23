@@ -38,12 +38,20 @@
     font-weight: bold;
     font-size: 14px;
     color: #1976d2;
+    margin-bottom: 8px;
 }
 
-.undated-med-dose {
+.undated-dosages {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.undated-dosage-item {
     font-size: 12px;
     color: #666;
-    margin-top: 4px;
+    text-align: center;
 }
 
 /* Modal Styles */
