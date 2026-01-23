@@ -40,9 +40,24 @@ class PatientViewSet(viewsets.ModelViewSet):
         """
         patient = self.get_object()
 
-        # Prefetch related medication and dosage schedules to avoid N+1 queries
         prescriptions = Prescription.objects.filter(patient=patient).prefetch_related("dosageschedule_set", "medication")
 
         timeline_items = build_timeline_items(prescriptions)
 
         return Response(timeline_items)
+
+    @action(detail=True, methods=["get"])
+    def undated_medications(self, request, pk=None):
+        """
+        GET /patients/<pk>/undated_medications/
+        Returns prescriptions without start_date
+        """
+        patient = self.get_object()
+
+        prescriptions = Prescription.objects.filter(
+            patient=patient,
+            start_date__isnull=True
+        ).prefetch_related("dosageschedule_set", "medication")
+
+        serializer = PrescriptionSerializer(prescriptions, many=True)
+        return Response(serializer.data)

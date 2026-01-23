@@ -41,6 +41,7 @@ def get_truncated_prescriptions(prescriptions):
 
     return result
 
+
 def build_timeline_items(prescriptions):
     cutoffs = get_truncated_prescriptions(prescriptions)
     items = []
@@ -56,6 +57,16 @@ def build_timeline_items(prescriptions):
         cutoff = cutoffs.get(p.id)
         end_date = cutoff if cutoff else natural_end
 
+        dosages = [
+            {
+                "dose": d.dose,
+                "frequency": d.frequency,
+                "route": d.route,
+                "duration": str(d.duration) if d.duration else None
+            }
+            for d in p.dosageschedule_set.all()
+        ]
+
         items.append({
             "id": p.id,
             "medication": p.medication.name,
@@ -63,6 +74,7 @@ def build_timeline_items(prescriptions):
             "end_date": end_date,
             "natural_end_date": natural_end,
             "is_truncated": cutoff is not None,
+            "dosages": dosages,
         })
 
     return items
