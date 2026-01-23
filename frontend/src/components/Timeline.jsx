@@ -76,8 +76,38 @@ const assignRows = (items) => {
     });
 };
 
-const Timeline = ({ items, daysAfter = 14 }) => {
+const Timeline = ({ items, daysAfter = 14, apiUrl, onPrescriptionDeleted }) => {
     const [selectedMed, setSelectedMed] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!selectedMed || !selectedMed.id) return;
+
+        if (!window.confirm("Are you sure you want to delete this prescription?")) {
+            return;
+        }
+
+        setDeleting(true);
+        try {
+            const response = await fetch(`${apiUrl}/api/prescriptions/${selectedMed.id}/`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete prescription");
+            }
+
+            setSelectedMed(null);
+            if (onPrescriptionDeleted) {
+                onPrescriptionDeleted();
+            }
+        } catch (err) {
+            alert(`Error deleting prescription: ${err.message}`);
+            console.error("Delete error:", err);
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     if (!items || items.length === 0) {
         return <div>No medication history</div>;
@@ -207,6 +237,14 @@ const Timeline = ({ items, daysAfter = 14 }) => {
                                 </ul>
                             </div>
                         )}
+
+                        <button
+                            className="delete-btn"
+                            onClick={handleDelete}
+                            disabled={deleting}
+                        >
+                            {deleting ? "Deleting..." : "Delete Prescription"}
+                        </button>
                     </div>
                 </div>
             )}
